@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulse Survey Bot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #e44d90 50%, #f093fb 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    .card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 3rem;
+      max-width: 500px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .emoji { font-size: 3rem; margin-bottom: 1rem; }
+    p { opacity: 0.9; line-height: 1.6; margin-bottom: 1rem; }
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="emoji">🏳️‍🌈</div>
+    <h1>Pulse Survey Bot</h1>
+    <p>Anonymous pulse surveys for your Slack workspace. Built with privacy first.</p>
+    <p>Use <code>/pulse help</code> in Slack to get started.</p>
+    <span class="badge">🔒 Fully Anonymous</span>
+  </div>
+</body>
+</html>
