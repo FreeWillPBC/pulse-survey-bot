@@ -130,6 +130,7 @@ async function handleViewSubmission(slack, payload) {
 
 async function handleCreateSurveySubmit(slack, payload) {
   const values = payload.view.state.values;
+  const channelId = payload.view.private_metadata;
 
   const title = values.survey_title.title_input.value;
   const rawQuestions = values.survey_questions.questions_input.value;
@@ -154,43 +155,16 @@ async function handleCreateSurveySubmit(slack, payload) {
     },
   });
 
-  // We need to post the survey to a channel. Since modals don't carry
-  // channel context, we'll post to the user's DM with instructions,
-  // and also try to post to the channel where /pulse create was run.
-  // The channel is stored in the payload's response_urls or we fall back.
-
-  // Post survey card as a DM to the creator with a share prompt
+  // DM the creator with survey ID and management info
   await slack.chat.postMessage({
     channel: userId,
-    text: `Your survey *${survey.title}* is ready! Survey ID: \`${survey.id}\`\nShare it in a channel by posting this message or invite the bot to a channel and re-run \`/pulse create\` there.`,
-    blocks: [
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `:white_check_mark: *Survey created!*\n\nTitle: *${survey.title}*\nID: \`${survey.id}\`\nQuestions: ${survey.questions.length}\n\nThe survey card has been posted. Team members can click the button to respond anonymously.`,
-        },
-      },
-    ],
+    text: `:white_check_mark: *Survey created!*\n\nTitle: *${survey.title}*\nSurvey ID: \`${survey.id}\`\nQuestions: ${survey.questions.length}\n\nUse this ID to manage your survey:\n- \`/pulse results ${survey.id}\` - View results\n- \`/pulse export ${survey.id}\` - Download CSV\n- \`/pulse close ${survey.id}\` - Close survey`,
   });
 
-  // Also post the actual survey card to the creator so they can share it.
-  // In practice, Slack will post this in the channel where /pulse create was run
-  // because we respond with the survey message.
-  // For now, we post to the user and they can forward it.
-
-  // Return empty response to close the modal, then post asynchronously
-  // We use response_action: clear to close the modal
-  // The survey message gets posted via the DM above + we'll also try the
-  // original channel
-
-  // Try to post to the channel if we have context
-  // Slack modals from slash commands don't preserve channel, so we store
-  // it. For v1, we'll post to the user's DM and they share it.
-
-  // Post the interactive survey card to the user
+  // Post the interactive survey card to the channel where /pulse create was run
+  const targetChannel = channelId || userId;
   await slack.chat.postMessage({
-    channel: userId,
+    channel: targetChannel,
     blocks: buildSurveyMessage(survey),
     text: `${survey.title} - Take the survey!`,
   });

@@ -37,7 +37,7 @@ export default async function handler(req) {
   try {
     switch (subcommand?.toLowerCase()) {
       case "create":
-        return await handleCreate(slack, triggerId);
+        return await handleCreate(slack, triggerId, channelId);
 
       case "results":
         return await handleResults(slack, channelId, userId, surveyId);
@@ -71,10 +71,10 @@ export default async function handler(req) {
 
 // ─── Subcommand Handlers ──────────────────────────────────────────────────────
 
-async function handleCreate(slack, triggerId) {
+async function handleCreate(slack, triggerId, channelId) {
   await slack.views.open({
     trigger_id: triggerId,
-    view: buildCreateSurveyModal(),
+    view: buildCreateSurveyModal(channelId),
   });
 
   // Return empty 200 - the modal takes over

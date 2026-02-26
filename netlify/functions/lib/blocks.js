@@ -11,10 +11,11 @@
 // It collects: title, questions (as a text blob, one per line), question type,
 // and settings toggles.
 
-export function buildCreateSurveyModal() {
+export function buildCreateSurveyModal(channelId) {
   return {
     type: "modal",
     callback_id: "create_survey_submit",
+    private_metadata: channelId || "",
     title: { type: "plain_text", text: "Create Pulse Survey" },
     submit: { type: "plain_text", text: "Create" },
     close: { type: "plain_text", text: "Cancel" },
@@ -221,15 +222,6 @@ export function buildSurveyMessage(survey) {
           action_id: "take_survey",
           value: survey.id,
           style: "primary",
-        },
-      ],
-    },
-    {
-      type: "context",
-      elements: [
-        {
-          type: "mrkdwn",
-          text: `Survey ID: \`${survey.id}\` · Created by <@${survey.createdBy}>`,
         },
       ],
     },
