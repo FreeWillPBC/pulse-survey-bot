@@ -350,6 +350,86 @@ export function buildCsvExport(survey, responses) {
   return [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
 }
 
+// ─── Survey List (My Surveys) ─────────────────────────────────────────────────
+
+export function buildListBlocks(surveys) {
+  if (surveys.length === 0) {
+    return [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: ":clipboard: *Your Surveys*\n\nYou haven't created any surveys yet. Use `/pulse create` in any channel to get started!",
+        },
+      },
+    ];
+  }
+
+  const blocks = [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `:clipboard: *Your Surveys* (${surveys.length})`,
+      },
+    },
+    { type: "divider" },
+  ];
+
+  for (const survey of surveys) {
+    const statusEmoji =
+      survey.status === "open" ? ":large_green_circle:" : ":red_circle:";
+    const statusText = survey.status === "open" ? "Open" : "Closed";
+    const created = new Date(survey.createdAt).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*${survey.title}*\n${statusEmoji} ${statusText} - ${survey.responseCount || 0} response${survey.responseCount === 1 ? "" : "s"} - Created ${created}`,
+      },
+    });
+
+    const buttons = [
+      {
+        type: "button",
+        text: { type: "plain_text", text: "View Results" },
+        action_id: "list_results",
+        value: survey.id,
+      },
+      {
+        type: "button",
+        text: { type: "plain_text", text: "Export CSV" },
+        action_id: "list_export",
+        value: survey.id,
+      },
+    ];
+
+    if (survey.status === "open") {
+      buttons.push({
+        type: "button",
+        text: { type: "plain_text", text: "Close Survey" },
+        action_id: "list_close",
+        value: survey.id,
+        style: "danger",
+      });
+    }
+
+    blocks.push({
+      type: "actions",
+      block_id: `list_actions_${survey.id}`,
+      elements: buttons,
+    });
+
+    blocks.push({ type: "divider" });
+  }
+
+  return blocks;
+}
+
 // ─── Help Message ─────────────────────────────────────────────────────────────
 
 export function buildHelpBlocks(docsUrl) {
@@ -376,10 +456,7 @@ export function buildHelpBlocks(docsUrl) {
         text:
           "*Commands*\n" +
           "• `/pulse create` - Create a new survey\n" +
-          "• `/pulse results <id>` - View survey results\n" +
-          "• `/pulse share <id>` - Post results to the channel\n" +
-          "• `/pulse export <id>` - Download results as CSV\n" +
-          "• `/pulse close <id>` - Close a survey\n" +
+          "• `/pulse list` - View and manage your surveys\n" +
           "• `/pulse help` - Show this help message",
       },
     },
@@ -393,7 +470,7 @@ export function buildHelpBlocks(docsUrl) {
           "2️⃣ Fill in your survey title and questions\n" +
           "3️⃣ The bot posts a survey card with a *Take Survey* button\n" +
           "4️⃣ Team members click the button and respond anonymously\n" +
-          "5️⃣ Use `/pulse results <id>` to check responses anytime",
+          "5️⃣ Use `/pulse list` to view results and manage your surveys",
       },
     },
     {

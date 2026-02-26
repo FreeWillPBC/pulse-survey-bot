@@ -99,3 +99,29 @@ export async function markUserResponded(surveyId, userId) {
     await store.setJSON(surveyId, set);
   }
 }
+
+// --- Per-user survey index (tracks which surveys a user created) ---
+
+export async function addSurveyToUserIndex(userId, surveyId) {
+  const store = getSurveyStore();
+  const key = `user_${userId}`;
+  const index = (await store.get(key, { type: "json" })) || [];
+  index.push(surveyId);
+  await store.setJSON(key, index);
+}
+
+export async function getUserSurveys(userId) {
+  const store = getSurveyStore();
+  const key = `user_${userId}`;
+  const ids = (await store.get(key, { type: "json" })) || [];
+
+  // Fetch all surveys in parallel
+  const surveys = await Promise.all(
+    ids.map((id) => store.get(id, { type: "json" }))
+  );
+
+  // Filter out any that were deleted or missing, newest first
+  return surveys
+    .filter(Boolean)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}

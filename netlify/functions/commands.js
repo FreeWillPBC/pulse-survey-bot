@@ -3,10 +3,11 @@ import { verifySlackRequest } from "./lib/verify.js";
 import {
   buildCreateSurveyModal,
   buildResultsBlocks,
+  buildListBlocks,
   buildCsvExport,
   buildHelpBlocks,
 } from "./lib/blocks.js";
-import { getSurvey, getResponses, closeSurvey } from "./lib/store.js";
+import { getSurvey, getResponses, closeSurvey, getUserSurveys } from "./lib/store.js";
 
 /**
  * Handles all /pulse slash commands.
@@ -39,11 +40,14 @@ export default async function handler(req) {
       case "create":
         return await handleCreate(slack, triggerId, channelId);
 
+      case "list":
+        return await handleList(slack, userId);
+
       case "results":
         return await handleResults(slack, channelId, userId, surveyId);
 
       case "share":
-        return await handleShare(slack, channelId, surveyId);
+        return await handleShare(slack, channelId, userId, surveyId);
 
       case "export":
         return await handleExport(slack, channelId, userId, surveyId);
@@ -71,6 +75,20 @@ export default async function handler(req) {
 
 // ─── Subcommand Handlers ──────────────────────────────────────────────────────
 
+async function handleList(slack, userId) {
+  const surveys = await getUserSurveys(userId);
+  const blocks = buildListBlocks(surveys);
+
+  // DM the list to the creator so buttons work and the message persists
+  await slack.chat.postMessage({
+    channel: userId,
+    blocks,
+    text: `Your surveys (${surveys.length})`,
+  });
+
+  return slackResponse("Check your DMs - I sent you a list of your surveys.");
+}
+
 async function handleCreate(slack, triggerId, channelId) {
   await slack.views.open({
     trigger_id: triggerId,
@@ -84,18 +102,22 @@ async function handleCreate(slack, triggerId, channelId) {
 async function handleResults(slack, channelId, userId, surveyId) {
   if (!surveyId)
     return slackResponse(
-      "Usage: `/pulse results <survey-id>`\nYou can find the survey ID at the bottom of any survey post."
+      "Usage: `/pulse results <survey-id>`\nTip: Use `/pulse list` to manage your surveys without needing IDs."
     );
 
   const survey = await getSurvey(surveyId);
   if (!survey)
     return slackResponse(`:x: Survey \`${surveyId}\` not found.`);
 
+  if (userId !== survey.createdBy)
+    return slackResponse(
+      `:lock: Only the survey creator can view results.`
+    );
+
   const responses = await getResponses(surveyId);
-  const isAdmin = userId === survey.createdBy;
 
   const blocks = buildResultsBlocks(survey, responses, {
-    isAdmin,
+    isAdmin: true,
     isShare: false,
   });
 
@@ -110,13 +132,18 @@ async function handleResults(slack, channelId, userId, surveyId) {
   return new Response("", { status: 200 });
 }
 
-async function handleShare(slack, channelId, surveyId) {
+async function handleShare(slack, channelId, userId, surveyId) {
   if (!surveyId)
     return slackResponse("Usage: `/pulse share <survey-id>`");
 
   const survey = await getSurvey(surveyId);
   if (!survey)
     return slackResponse(`:x: Survey \`${surveyId}\` not found.`);
+
+  if (userId !== survey.createdBy)
+    return slackResponse(
+      `:lock: Only the survey creator can share results.`
+    );
 
   const responses = await getResponses(surveyId);
 

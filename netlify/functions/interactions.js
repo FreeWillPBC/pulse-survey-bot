@@ -4,6 +4,7 @@ import {
   buildResponseModal,
   buildSurveyMessage,
   buildResultsBlocks,
+  buildCsvExport,
 } from "./lib/blocks.js";
 import { parseQuestions } from "./lib/parse-questions.js";
 import {
@@ -13,6 +14,8 @@ import {
   getResponses,
   hasUserResponded,
   markUserResponded,
+  addSurveyToUserIndex,
+  closeSurvey,
 } from "./lib/store.js";
 
 /**
@@ -61,10 +64,11 @@ export default async function handler(req) {
 // ─── Block Actions (button clicks) ───────────────────────────────────────────
 
 async function handleBlockActions(slack, payload) {
+  const userId = payload.user.id;
+
   for (const action of payload.actions) {
     if (action.action_id === "take_survey") {
       const surveyId = action.value;
-      const userId = payload.user.id;
 
       const survey = await getSurvey(surveyId);
       if (!survey) {
@@ -100,6 +104,80 @@ async function handleBlockActions(slack, payload) {
       await slack.views.open({
         trigger_id: payload.trigger_id,
         view: buildResponseModal(survey),
+      });
+    }
+
+    // ─── List action buttons ──────────────────────────────────────────────
+    if (action.action_id === "list_results") {
+      const surveyId = action.value;
+      const survey = await getSurvey(surveyId);
+      if (!survey) {
+        await slack.chat.postMessage({
+          channel: userId,
+          text: ":x: Survey not found.",
+        });
+        continue;
+      }
+
+      const responses = await getResponses(surveyId);
+      const blocks = buildResultsBlocks(survey, responses, {
+        isAdmin: true,
+        isShare: false,
+      });
+
+      await slack.chat.postMessage({
+        channel: userId,
+        blocks,
+        text: `Results for ${survey.title}`,
+      });
+    }
+
+    if (action.action_id === "list_close") {
+      const surveyId = action.value;
+      const survey = await getSurvey(surveyId);
+      if (!survey) {
+        await slack.chat.postMessage({
+          channel: userId,
+          text: ":x: Survey not found.",
+        });
+        continue;
+      }
+
+      if (survey.status === "closed") {
+        await slack.chat.postMessage({
+          channel: userId,
+          text: `:information_source: *${survey.title}* is already closed.`,
+        });
+        continue;
+      }
+
+      await closeSurvey(surveyId);
+      await slack.chat.postMessage({
+        channel: userId,
+        text: `:checkered_flag: *${survey.title}* is now closed. ${survey.responseCount || 0} total responses.`,
+      });
+    }
+
+    if (action.action_id === "list_export") {
+      const surveyId = action.value;
+      const survey = await getSurvey(surveyId);
+      if (!survey) {
+        await slack.chat.postMessage({
+          channel: userId,
+          text: ":x: Survey not found.",
+        });
+        continue;
+      }
+
+      const responses = await getResponses(surveyId);
+      const csv = buildCsvExport(survey, responses);
+
+      await slack.filesUploadV2({
+        channel_id: userId,
+        content: csv,
+        filename: `pulse-survey-${surveyId}-results.csv`,
+        title: `${survey.title} - Export`,
+        initial_comment: `:bar_chart: CSV export for *${survey.title}* (${responses.length} responses)`,
       });
     }
 
@@ -155,10 +233,13 @@ async function handleCreateSurveySubmit(slack, payload) {
     },
   });
 
-  // DM the creator with survey ID and management info
+  // Add to the creator's survey index for /pulse list
+  await addSurveyToUserIndex(userId, survey.id);
+
+  // DM the creator with confirmation
   await slack.chat.postMessage({
     channel: userId,
-    text: `:white_check_mark: *Survey created!*\n\nTitle: *${survey.title}*\nSurvey ID: \`${survey.id}\`\nQuestions: ${survey.questions.length}\n\nUse this ID to manage your survey:\n- \`/pulse results ${survey.id}\` - View results\n- \`/pulse export ${survey.id}\` - Download CSV\n- \`/pulse close ${survey.id}\` - Close survey`,
+    text: `:white_check_mark: *Survey created!*\n\nTitle: *${survey.title}*\nQuestions: ${survey.questions.length}\n\nUse \`/pulse list\` to view results, export data, or close your survey.`,
   });
 
   // Post the interactive survey card to the channel where /pulse create was run
