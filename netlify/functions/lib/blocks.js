@@ -28,7 +28,7 @@ export function buildCreateSurveyModal() {
           action_id: "title_input",
           placeholder: {
             type: "plain_text",
-            text: "e.g. Pride ERG Q1 Pulse Check",
+            text: "e.g. Q1 Team Pulse Check",
           },
         },
       },
@@ -42,7 +42,7 @@ export function buildCreateSurveyModal() {
           multiline: true,
           placeholder: {
             type: "plain_text",
-            text: "How supported do you feel as an LGBTQ+ employee?\nWhich events would you like to see? (multi-select)\nAny additional feedback? (free-text)",
+            text: "How satisfied are you with team communication?\nWhich initiatives would you like to see? (multi-select)\nAny additional feedback? (free-text)",
           },
         },
         hint: {
@@ -207,7 +207,7 @@ export function buildSurveyMessage(survey) {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `:rainbow: *${survey.title}*\n\n:lock: All responses are *completely anonymous*. Your identity is never stored.\n:bar_chart: ${survey.questions.length} question${survey.questions.length === 1 ? "" : "s"} · Takes about 1 minute`,
+        text: `:clipboard: *${survey.title}*\n\n:lock: All responses are *completely anonymous*. Your identity is never stored.\n:bar_chart: ${survey.questions.length} question${survey.questions.length === 1 ? "" : "s"} · Takes about 1 minute`,
       },
     },
     { type: "divider" },
@@ -217,7 +217,7 @@ export function buildSurveyMessage(survey) {
       elements: [
         {
           type: "button",
-          text: { type: "plain_text", text: ":rainbow_flag: Take Survey" },
+          text: { type: "plain_text", text: "Take Survey" },
           action_id: "take_survey",
           value: survey.id,
           style: "primary",
@@ -366,7 +366,7 @@ export function buildHelpBlocks(docsUrl) {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `:rainbow: *Pulse Survey Bot — Help*`,
+        text: `:clipboard: *Pulse Survey Bot - Help*`,
       },
     },
     { type: "divider" },
@@ -374,7 +374,7 @@ export function buildHelpBlocks(docsUrl) {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*Getting Started*\nPulse Survey Bot lets you run anonymous surveys right in Slack. Perfect for ERG feedback, team pulse checks, and more.\n\n:lock: *Privacy First:* All responses are completely anonymous. We never store who responded — only a one-way hash to prevent duplicate submissions.`,
+        text: `*Getting Started*\nPulse Survey Bot lets you run anonymous surveys right in Slack. Perfect for ERG feedback, team pulse checks, and more.\n\n:lock: *Privacy First:* All responses are completely anonymous. We never store who responded - only a one-way hash to prevent duplicate submissions.`,
       },
     },
     {
@@ -383,12 +383,12 @@ export function buildHelpBlocks(docsUrl) {
         type: "mrkdwn",
         text:
           "*Commands*\n" +
-          "• `/pulse create` — Create a new survey\n" +
-          "• `/pulse results <id>` — View survey results\n" +
-          "• `/pulse share <id>` — Post results to the channel\n" +
-          "• `/pulse export <id>` — Download results as CSV\n" +
-          "• `/pulse close <id>` — Close a survey\n" +
-          "• `/pulse help` — Show this help message",
+          "• `/pulse create` - Create a new survey\n" +
+          "• `/pulse results <id>` - View survey results\n" +
+          "• `/pulse share <id>` - Post results to the channel\n" +
+          "• `/pulse export <id>` - Download results as CSV\n" +
+          "• `/pulse close <id>` - Close a survey\n" +
+          "• `/pulse help` - Show this help message",
       },
     },
     {
@@ -410,9 +410,9 @@ export function buildHelpBlocks(docsUrl) {
         type: "mrkdwn",
         text:
           "*Question Types*\n" +
-          "• *Rating scale (default)* — 1-5 star rating\n" +
-          "• *(multi-select)* — Multiple choice, select all that apply\n" +
-          "• *(free-text)* — Open-ended text response (admin-only by default)",
+          "• *Rating scale (default)* - 1-5 star rating\n" +
+          "• *(multi-select)* - Multiple choice, select all that apply\n" +
+          "• *(free-text)* - Open-ended text response (admin-only by default)",
       },
     },
     ...(docsUrl

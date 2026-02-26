@@ -15,7 +15,6 @@ import { getSurvey, getResponses, closeSurvey } from "./lib/store.js";
  * subcommand from the `text` field and route accordingly.
  */
 export default async function handler(req) {
-  // Slack sends a URL-verification challenge on setup
   const rawBody = await req.text();
   const headers = Object.fromEntries(req.headers.entries());
 
@@ -55,7 +54,7 @@ export default async function handler(req) {
       case "help":
       case "":
       case undefined:
-        return await handleHelp(slack, channelId, userId);
+        return await handleHelp();
 
       default:
         return slackResponse(
@@ -78,7 +77,7 @@ async function handleCreate(slack, triggerId) {
     view: buildCreateSurveyModal(),
   });
 
-  // Return empty 200 — the modal takes over
+  // Return empty 200 - the modal takes over
   return new Response("", { status: 200 });
 }
 
@@ -157,7 +156,7 @@ async function handleExport(slack, channelId, userId, surveyId) {
     channel_id: channelId,
     content: csv,
     filename: `pulse-survey-${surveyId}-results.csv`,
-    title: `${survey.title} — Export`,
+    title: `${survey.title} - Export`,
     initial_comment: `:bar_chart: CSV export for *${survey.title}* (${responses.length} responses)`,
   });
 
@@ -192,18 +191,15 @@ async function handleClose(slack, channelId, userId, surveyId) {
   return new Response("", { status: 200 });
 }
 
-async function handleHelp(slack, channelId, userId) {
+async function handleHelp() {
   const docsUrl = process.env.DOCS_URL || null;
   const blocks = buildHelpBlocks(docsUrl);
 
-  await slack.chat.postEphemeral({
-    channel: channelId,
-    user: userId,
-    blocks,
-    text: "Pulse Survey Bot — Help",
-  });
-
-  return new Response("", { status: 200 });
+  // Return help directly as the slash command response - faster and no API call needed
+  return new Response(
+    JSON.stringify({ response_type: "ephemeral", blocks, text: "Pulse Survey Bot - Help" }),
+    { status: 200, headers: { "Content-Type": "application/json" } }
+  );
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

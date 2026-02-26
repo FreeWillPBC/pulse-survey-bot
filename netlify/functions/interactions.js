@@ -192,7 +192,7 @@ async function handleCreateSurveySubmit(slack, payload) {
   await slack.chat.postMessage({
     channel: userId,
     blocks: buildSurveyMessage(survey),
-    text: `${survey.title} — Take the survey!`,
+    text: `${survey.title} - Take the survey!`,
   });
 
   return new Response(
@@ -230,7 +230,7 @@ async function handleSurveyResponseSubmit(slack, payload) {
     );
   }
 
-  // Extract answers — completely anonymous, no user info stored
+  // Extract answers - completely anonymous, no user info stored
   const answers = {};
   survey.questions.forEach((q, i) => {
     const blockValues = values[`q_${i}`]?.[`answer_${i}`];
